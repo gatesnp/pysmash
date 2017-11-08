@@ -40,10 +40,10 @@ class SmashGG(object):
         """Show a list of events belonging to a tournment"""
         return tournaments.show_events(tournament_name)
 
-    def tournament_show_sets(self, tournament_name, event='', params=[]):
+    def tournament_show_sets(self, tournament_name, event='', params=[], get_completed_sets=True, get_ready_sets=False, get_future_sets=False):
         """Shows a complete list of sets given a tournament and event names"""
         event = self._validate_event_name(event)
-        return tournaments.show_sets(tournament_name, event, params)
+        return tournaments.show_sets(tournament_name, event, params, get_completed_sets=get_completed_sets, get_ready_sets=get_ready_sets, get_future_sets=get_future_sets)
 
     def tournament_show_players(self, tournament_name, event='', tournament_params=[]):
         """Shows a complete list of players/entrants given a tournament and event name"""

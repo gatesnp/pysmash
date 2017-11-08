@@ -38,13 +38,13 @@ def show_with_brackets(tournament_name, event, tournament_params=[], ):
     return utils.merge_two_dicts(tournament, brackets)
 
 
-def show_sets(tournament_name, event, tournament_params=[]):
+def show_sets(tournament_name, event, tournament_params=[], get_completed_sets=True, get_ready_sets=False, get_future_sets=False):
     """Returns all sets from a tournament"""
     tournament = show_with_brackets(tournament_name, event, tournament_params)
 
     results = []
     for bracket_id in tournament['bracket_ids']:
-        bracket_sets = brackets.sets(bracket_id)
+        bracket_sets = brackets.sets(bracket_id, get_completed_sets=get_completed_sets, get_ready_sets=get_ready_sets, get_future_sets=get_future_sets)
         for _set in bracket_sets:
             if len(_set) > 0:
                 results.append(_set)

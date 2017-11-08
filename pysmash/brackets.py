@@ -15,13 +15,13 @@ def players(bracket_id, filter_response=True):
     return response
 
 
-def sets(bracket_id, filter_response=True):
+def sets(bracket_id, filter_response=True, get_completed_sets=True, get_ready_sets=False, get_future_sets=False):
     uri = BRACKET_URL + str(bracket_id)
 
     response = api.get(uri, VALID_BRACKET_PARAMS)
 
     if filter_response:
-        response = _filter_set_response(response)
+        response = _filter_set_response(response, get_completed_sets=get_completed_sets, get_ready_sets=get_ready_sets, get_future_sets=get_future_sets)
 
     return response
 
@@ -80,7 +80,9 @@ def _filter_sets_given_player(response, tag):
 
 def _filter_player_response(response):
     players = []
-    entrants = response['entities']['entrants']
+    entrants = response['entities'].get('entrants')
+    if entrants == None:
+      return []
 
     for entrant in entrants:
         player = _get_player_from_entrant(entrant)
@@ -89,7 +91,7 @@ def _filter_player_response(response):
     return players
 
 
-def _filter_set_response(response):
+def _filter_set_response(response, get_completed_sets=True, get_ready_sets=False, get_future_sets=False):
     entities = response.get('entities', None)
 
     if entities is None:
@@ -110,7 +112,7 @@ def _filter_set_response(response):
         if 'preview' in str((bracket_set['id'])):
             break
 
-        _set, success = _get_set_from_bracket(bracket_set, is_final_bracket)
+        _set, success = _get_set_from_bracket(bracket_set, is_final_bracket, get_completed_sets=get_completed_sets, get_ready_sets=get_ready_sets, get_future_sets=get_future_sets)
         if success:
             results_sets.append(_set)
 
@@ -125,13 +127,21 @@ def _is_final_bracket(groups):
     return is_final_bracket
 
 
-def _get_set_from_bracket(bracket_set, is_final_bracket):
-    # ignore bye sets
-    if bracket_set['entrant1Id'] is None or bracket_set['entrant2Id'] is None:
+def _get_set_from_bracket(bracket_set, is_final_bracket, get_completed_sets=True, get_ready_sets=False, get_future_sets=False):
+
+    if bracket_set['unreachable']:
         return None, False
 
-    # winner's id of `None` or loser's id of `None` means the set was not played
-    if bracket_set['winnerId'] is None or bracket_set['loserId'] is None:
+    # Filter out sets that do not have both entrants ready yet.
+    if (bracket_set['entrant1Id'] is None or bracket_set['entrant2Id'] is None) and not get_future_sets:
+        return None, False
+        
+    # This filters out sets that are currently ready to be played.
+    if (bracket_set['winnerId'] is None or bracket_set['loserId'] is None) and not (bracket_set['entrant1Id'] is None or bracket_set['entrant2Id'] is None) and not get_ready_sets:
+        return None, False
+        
+    # Filter out sets that have already been played.
+    if not (bracket_set['winnerId'] is None or bracket_set['loserId'] is None) and not get_completed_sets:
         return None, False
 
     _set = {
